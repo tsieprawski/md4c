@@ -38,6 +38,7 @@
 #define MD_HTML_FLAG_VERBATIM_ENTITIES      0x0002
 #define MD_HTML_FLAG_SKIP_UTF8_BOM          0x0004
 #define MD_HTML_FLAG_XHTML                  0x0008
+#define MD_HTML_FLAG_TEXT_ONLY   0x0016
 
 
 /* Render Markdown into HTML.

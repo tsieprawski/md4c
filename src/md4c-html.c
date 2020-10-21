@@ -381,6 +381,10 @@ enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
     static const MD_CHAR* head[6] = { "<h1>", "<h2>", "<h3>", "<h4>", "<h5>", "<h6>" };
     MD_HTML* r = (MD_HTML*) userdata;
 
+    if (r->flags & MD_HTML_FLAG_TEXT_ONLY) {
+        return 0;
+    }
+
     switch(type) {
         case MD_BLOCK_DOC:      /* noop */ break;
         case MD_BLOCK_QUOTE:    RENDER_VERBATIM(r, "<blockquote>\n"); break;
@@ -408,6 +412,10 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
 {
     static const MD_CHAR* head[6] = { "</h1>\n", "</h2>\n", "</h3>\n", "</h4>\n", "</h5>\n", "</h6>\n" };
     MD_HTML* r = (MD_HTML*) userdata;
+
+    if (r->flags & MD_HTML_FLAG_TEXT_ONLY) {
+        return 0;
+    }
 
     switch(type) {
         case MD_BLOCK_DOC:      /*noop*/ break;
@@ -504,6 +512,16 @@ static int
 text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdata)
 {
     MD_HTML* r = (MD_HTML*) userdata;
+
+    if (r->flags & MD_HTML_FLAG_TEXT_ONLY) {
+        switch(type) {
+            case MD_TEXT_NORMAL:
+                render_html_escaped(r, text, size); break;
+            default:
+                break;
+        }
+        return 0;
+    }
 
     switch(type) {
         case MD_TEXT_NULLCHAR:  render_utf8_codepoint(r, 0x0000, render_verbatim); break;
