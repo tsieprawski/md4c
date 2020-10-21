@@ -4,7 +4,7 @@ md4c_src = [
     'md4c.c',
     'md4c-html.c'
 ]
-md4c = static_library('menago',
+md4c = both_libraries('md4c',
     md4c_src,
     include_directories: [
         md4c_inc_src
@@ -12,7 +12,8 @@ md4c = static_library('menago',
     install: true)
 md4c_dep = declare_dependency(link_with: md4c,
     include_directories: md4c_inc_src)
-libmenago_inc = include_directories('.')
+libmd4c_inc = include_directories('.')
+pkg.generate(md4c)
 
 install_headers([
     'md4c.h',
