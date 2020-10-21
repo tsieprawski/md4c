@@ -77,3 +77,5 @@ stamp-*
 *.stamp
 *.stamp-*
 .Tpo
+build
+
