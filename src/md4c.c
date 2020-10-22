@@ -6064,7 +6064,7 @@ md_analyze_line(MD_CTX* ctx, OFF beg, OFF* p_end,
     /* Scan for end of the line.
      *
      * Note this is quite a bottleneck of the parsing as we here iterate almost
-     * over compete document.
+     * over complete document.
      */
 #if defined __linux__ && !defined MD4C_USE_UTF16
     /* Recent glibc versions have superbly optimized strcspn(), even using
@@ -6244,6 +6244,10 @@ md_process_doc(MD_CTX *ctx)
 
         MD_CHECK(md_analyze_line(ctx, off, &off, pivot_line, line));
         MD_CHECK(md_process_line(ctx, &pivot_line, line));
+
+        if (ctx->parser.flags & MD_FLAG_FIRSTLINEONLY) {
+          break;
+        }
     }
 
     md_end_current_block(ctx);

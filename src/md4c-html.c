@@ -53,7 +53,7 @@ struct MD_HTML_tag {
     void* userdata;
     unsigned flags;
     int image_nesting_level;
-    char escape_map[256];
+    char *escape_map;
 };
 
 #define NEED_HTML_ESC_FLAG   0x1
@@ -69,6 +69,27 @@ struct MD_HTML_tag {
 #define ISUPPER(ch)     ('A' <= (ch) && (ch) <= 'Z')
 #define ISALNUM(ch)     (ISLOWER(ch) || ISUPPER(ch) || ISDIGIT(ch))
 
+static int initialized = 0;
+static char default_escape_map[256];
+
+static void ensure_escape_map_initialized(MD_HTML *render)
+{
+	if (0 == initialized)
+	{
+	    /* Build map of characters which need escaping. */
+        for(int i = 0; i < 256; i++) {
+            unsigned char ch = (unsigned char) i;
+
+            if(strchr("\"&<>", ch) != NULL)
+                default_escape_map[i] |= NEED_HTML_ESC_FLAG;
+
+            if(!ISALNUM(ch)  &&  strchr("-_.+!*(),%#@?=;:/,+$", ch) == NULL)
+                default_escape_map[i] |= NEED_URL_ESC_FLAG;
+        }
+		initialized = 1;
+	}
+	render->escape_map = default_escape_map;
+}
 
 static inline void
 render_verbatim(MD_HTML* r, const MD_CHAR* text, MD_SIZE size)
@@ -551,8 +572,7 @@ md_html(const MD_CHAR* input, MD_SIZE input_size,
         void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
         void* userdata, unsigned parser_flags, unsigned renderer_flags)
 {
-    MD_HTML render = { process_output, userdata, renderer_flags, 0, { 0 } };
-    int i;
+    MD_HTML render = { process_output, userdata, renderer_flags, 0, 0 };
 
     MD_PARSER parser = {
         0,
@@ -566,16 +586,7 @@ md_html(const MD_CHAR* input, MD_SIZE input_size,
         NULL
     };
 
-    /* Build map of characters which need escaping. */
-    for(i = 0; i < 256; i++) {
-        unsigned char ch = (unsigned char) i;
-
-        if(strchr("\"&<>", ch) != NULL)
-            render.escape_map[i] |= NEED_HTML_ESC_FLAG;
-
-        if(!ISALNUM(ch)  &&  strchr("-_.+!*(),%#@?=;:/,+$", ch) == NULL)
-            render.escape_map[i] |= NEED_URL_ESC_FLAG;
-    }
+    ensure_escape_map_initialized(&render);
 
     /* Consider skipping UTF-8 byte order mark (BOM). */
     if(renderer_flags & MD_HTML_FLAG_SKIP_UTF8_BOM  &&  sizeof(MD_CHAR) == 1) {
