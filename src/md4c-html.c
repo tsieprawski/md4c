@@ -344,10 +344,27 @@ render_open_td_block(MD_HTML* r, const MD_CHAR* cell_type, const MD_BLOCK_TD_DET
     }
 }
 
+static int
+is_link_relative(const MD_ATTRIBUTE *attr)
+{
+    // We'll check only for http:// and https://.
+    return attr->size < 7 ||
+        0 != memcmp(attr->text, (MD_CHAR *)"http", 4) ||
+        0 != memcmp(attr->text + 4, (MD_CHAR *)"://", 3) ||
+        attr->size < 8 ||
+        0 != memcmp(attr->text + 4, (MD_CHAR *)"s://", 4);
+}
+
 static void
 render_open_a_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
 {
+    md_html_config *config = (md_html_config *)r->userdata;
+
     RENDER_VERBATIM(r, "<a href=\"");
+    if (config->link_prefix && is_link_relative(&det->href))
+    {
+        RENDER_VERBATIM(r, config->link_prefix);
+    }
     render_attribute(r, &det->href, render_url_escaped);
 
     if(det->title.text != NULL) {
@@ -361,7 +378,13 @@ render_open_a_span(MD_HTML* r, const MD_SPAN_A_DETAIL* det)
 static void
 render_open_img_span(MD_HTML* r, const MD_SPAN_IMG_DETAIL* det)
 {
+    md_html_config *config = (md_html_config *)r->userdata;
+
     RENDER_VERBATIM(r, "<img src=\"");
+    if (config->link_prefix && is_link_relative(&det->src))
+    {
+        RENDER_VERBATIM(r, config->link_prefix);
+    }
     render_attribute(r, &det->src, render_url_escaped);
 
     RENDER_VERBATIM(r, "\" alt=\"");
@@ -567,16 +590,21 @@ debug_log_callback(const char* msg, void* userdata)
         fprintf(stderr, "MD4C: %s\n", msg);
 }
 
+static void proxy_output(const MD_CHAR *data, MD_SIZE size, void *userdata)
+{
+    md_html_config *config = (md_html_config *)userdata;
+    (config->process_output)(data, size, config->userdata);
+}
+
 int
 md_html(const MD_CHAR* input, MD_SIZE input_size,
-        void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
-        void* userdata, unsigned parser_flags, unsigned renderer_flags)
+        md_html_config *config)
 {
-    MD_HTML render = { process_output, userdata, renderer_flags, 0, 0 };
+    MD_HTML render = { proxy_output, config, config->renderer_flags, 0, 0 };
 
     MD_PARSER parser = {
         0,
-        parser_flags,
+        config->parser_flags,
         enter_block_callback,
         leave_block_callback,
         enter_span_callback,
@@ -589,7 +617,7 @@ md_html(const MD_CHAR* input, MD_SIZE input_size,
     ensure_escape_map_initialized(&render);
 
     /* Consider skipping UTF-8 byte order mark (BOM). */
-    if(renderer_flags & MD_HTML_FLAG_SKIP_UTF8_BOM  &&  sizeof(MD_CHAR) == 1) {
+    if(config->renderer_flags & MD_HTML_FLAG_SKIP_UTF8_BOM  &&  sizeof(MD_CHAR) == 1) {
         static const MD_CHAR bom[3] = { 0xef, 0xbb, 0xbf };
         if(input_size >= sizeof(bom)  &&  memcmp(input, bom, sizeof(bom)) == 0) {
             input += sizeof(bom);

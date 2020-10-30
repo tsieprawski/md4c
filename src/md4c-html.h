@@ -32,6 +32,25 @@
     extern "C" {
 #endif
 
+typedef struct
+{
+    /* Callback process_output() gets called with chunks of HTML output.
+    * (Typical implementation may just output the bytes to a file or append to
+    * some buffer).*/
+    void (*process_output)(const MD_CHAR*, MD_SIZE, void*);
+
+    // Param userdata is just propgated back to process_output() callback.
+    void *userdata;
+
+    // Param parser_flags are flags from md4c.h propagated to md_parse().
+    unsigned parser_flags;
+
+    // Param renderer_flags is bitmask of MD_HTML_FLAG_xxxx.
+    unsigned renderer_flags;
+
+    // Param link_prefix is prefix to relative links in <a href> and <img src>.
+    char *link_prefix;
+} md_html_config;
 
 /* If set, debug output from md_parse() is sent to stderr. */
 #define MD_HTML_FLAG_DEBUG                  0x0001
@@ -47,19 +66,12 @@
  * HTML header/footer manually before/after calling md_html().
  *
  * Params input and input_size specify the Markdown input.
- * Callback process_output() gets called with chunks of HTML output.
- * (Typical implementation may just output the bytes to a file or append to
- * some buffer).
- * Param userdata is just propgated back to process_output() callback.
- * Param parser_flags are flags from md4c.h propagated to md_parse().
- * Param render_flags is bitmask of MD_HTML_FLAG_xxxx.
  *
  * Returns -1 on error (if md_parse() fails.)
  * Returns 0 on success.
  */
 int md_html(const MD_CHAR* input, MD_SIZE input_size,
-            void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
-            void* userdata, unsigned parser_flags, unsigned renderer_flags);
+            md_html_config *config);
 
 
 #ifdef __cplusplus
