@@ -79,3 +79,5 @@ stamp-*
 .Tpo
 build
 
+# Alpine package files
+*.apk
