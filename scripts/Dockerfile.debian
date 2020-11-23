@@ -1,0 +1,26 @@
+FROM debian:sid-slim
+ADD . /src
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bash \
+        build-essential \
+        debhelper \
+        devscripts \
+        dh-make \
+        gcc \
+        git \
+        meson \
+        ninja-build \
+        && \
+    cd /src && \
+    meson setup \
+        --wrap-mode=nofallback \
+        build && \
+    meson dist -C build --no-tests && \
+    cp build/meson-dist/*md4c*.tar.xz ../libmd4c_0.4.5.orig.tar.xz && \
+    debuild -i -us -uc -b
+
+FROM debian:sid-slim
+COPY --from=0 /libmd4c_0.4.5_amd64.deb /md4c.deb
+COPY --from=0 /libmd4c-dev_0.4.5_amd64.deb /md4c-dev.deb
+RUN dpkg -i /md4c.deb

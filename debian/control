@@ -1,0 +1,23 @@
+Source: md4c
+Priority: optional
+Maintainer: Tomasz Sieprawski <tomasz@sieprawski.eu>
+Build-Depends: debhelper-compat (= 12)
+Standards-Version: 4.5.0
+Section: libs
+Homepage: https://github.com/mity/md4c
+Version: 0.4.5
+
+Package: libmd4c-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: libmd4c (>= 0.4.5), ${shlibs:Depends}, ${misc:Depends}
+Version: 4.0
+Description: MD4C stands for "Markdown for C" and that's exactly what this project is about.
+
+Package: libmd4c
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Version: 0.4.5
+Description: MD4C stands for "Markdown for C" and that's exactly what this project is about.
