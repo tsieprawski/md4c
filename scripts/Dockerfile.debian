@@ -23,4 +23,5 @@ RUN apt-get update && \
 FROM debian:sid-slim
 COPY --from=0 /libmd4c_0.4.5_amd64.deb /md4c.deb
 COPY --from=0 /libmd4c-dev_0.4.5_amd64.deb /md4c-dev.deb
+COPY --from=0 /libmd4c-dbgsym_0.4.5_amd64.deb /md4c-dbgsym.deb
 RUN dpkg -i /md4c.deb
